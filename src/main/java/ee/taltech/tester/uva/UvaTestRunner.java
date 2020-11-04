@@ -121,6 +121,7 @@ public class UvaTestRunner {
 	@SneakyThrows
 	private TestContextDTO fetchStudentResponse(String userID, String problemID, String problemName) {
 		JsonNode jsonNode = fetchStudentResults(userID, problemID);
+		String name = jsonNode.get(userID).get("name").asText();
 		JsonNode subs = jsonNode.get(userID).get("subs");
 		List<UnitTestDTO> unitTests = new ArrayList<>();
 
@@ -161,9 +162,9 @@ public class UvaTestRunner {
 		return TestContextDTO.builder()
 				.startDate(minimumSubmissionTime * 1000)
 				.endDate(maximumSubmissionTime * 1000)
-				.file(problemID + " - " + problemName)
+				.file(problemID + " - " + problemName + " - " + name)
 				.grade(passed == 0 ? 0.0 : 100.0)
-				.name(problemID + " - " + problemName)
+				.name(problemID + " - " + problemName + " - " + name)
 				.passedCount(passed)
 				.unitTests(unitTests)
 				.weight(Math.max(passed, 1))
