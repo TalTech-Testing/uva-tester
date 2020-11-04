@@ -3,13 +3,12 @@ package ee.taltech.tester.uva;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.taltech.arete.java.request.tester.DockerParameters;
-import ee.taltech.arete.java.response.arete.AreteResponseDTO;
-import ee.taltech.arete.java.response.arete.TestContextDTO;
-import ee.taltech.arete.java.response.arete.TestStatus;
-import ee.taltech.arete.java.response.arete.UnitTestDTO;
+import ee.taltech.arete.java.response.arete.*;
 import lombok.SneakyThrows;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -62,6 +61,7 @@ public class UvaTestRunner {
 
 	private final ObjectMapper mapper;
 	private final HttpClient client;
+	private Long firstPassedTimestamp = null;
 
 	public UvaTestRunner() {
 		mapper = new ObjectMapper();
@@ -71,8 +71,20 @@ public class UvaTestRunner {
 	@SneakyThrows
 	public void run() {
 		DockerParameters parameters = mapper.readValue(new File("host/input.json"), DockerParameters.class);
-		AreteResponseDTO responseDTO = fetchResult(parameters.getContentRoot(), parameters.getTestRoot());
-		mapper.writeValue(new File("host/intput.json"), responseDTO);
+		AreteResponseDTO responseDTO;
+		try {
+			responseDTO = fetchResult(parameters.getContentRoot(), parameters.getTestRoot());
+		} catch (Exception e) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			String sStackTrace = sw.toString();
+			responseDTO = AreteResponseDTO.builder()
+					.output(e.getMessage())
+					.consoleOutputs(List.of(new ConsoleOutputDTO(sStackTrace)))
+					.build();
+		}
+		mapper.writeValue(new File("host/output.json"), responseDTO);
 	}
 
 	@SneakyThrows
@@ -86,6 +98,10 @@ public class UvaTestRunner {
 		TestContextDTO context = fetchStudentResponse(userID, problemID, problemName);
 
 		return AreteResponseDTO.builder()
+				.totalPassedCount(Math.toIntExact(context.getUnitTests().stream().filter(x -> x.getStatus() == TestStatus.PASSED).count()))
+				.totalCount(context.getUnitTests().size())
+				.timestamp(firstPassedTimestamp)
+				.slug(problemID + " - " + problemName)
 				.testSuites(List.of(context))
 				.build();
 	}
@@ -125,6 +141,9 @@ public class UvaTestRunner {
 
 			if (verdictID == 90) {
 				passed += 1;
+				if (firstPassedTimestamp == null || firstPassedTimestamp > ((long) submissionTime) * 1000) {
+					firstPassedTimestamp = ((long) submissionTime) * 1000;
+				}
 			}
 
 			unitTests.add(UnitTestDTO.builder()
