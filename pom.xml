@@ -9,6 +9,18 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ee.taltech.tester.uva.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>11</source>
@@ -17,6 +29,7 @@
             </plugin>
         </plugins>
     </build>
+
     <groupId>ee.taltech.tester.uva</groupId>
     <artifactId>uva_tester</artifactId>
     <version>1.0</version>
