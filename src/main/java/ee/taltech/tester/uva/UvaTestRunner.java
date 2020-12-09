@@ -81,7 +81,7 @@ public class UvaTestRunner {
 			String sStackTrace = sw.toString();
 			responseDTO = AreteResponseDTO.builder()
 					.output(e.getMessage())
-					.consoleOutputs(List.of(new ConsoleOutputDTO(sStackTrace)))
+					.consoleOutputs(sStackTrace)
 					.build();
 		}
 		mapper.writeValue(new File("host/output.json"), responseDTO);
